@@ -1,10 +1,10 @@
 var gulp = require('gulp');
 var dutil = require('./doc-util');
-var sass = require('gulp-sass');
+var sass = require('gulp-sass')(require('sass'));
 var autoprefixer = require('gulp-autoprefixer');
 var sourcemaps = require('gulp-sourcemaps');
 var rename = require('gulp-rename');
-var linter = require('gulp-scss-lint');
+var spawn = require('cross-spawn');
 var merge = require('merge-stream');
 var filter = require('gulp-filter');
 var replace = require('gulp-replace');
@@ -14,6 +14,17 @@ var task = /([\w\d-_]+)\.js$/.exec(__filename)[ 1 ];
 
 var entryFileFilter = filter('all.scss', { restore: true });
 var normalizeCssFilter = filter('normalize.css', { restore: true });
+// gulp-scss-lint has an unpatched command injection advisory, so call the
+// scss_lint gem from the Gemfile directly. Exit code 1 means warnings only,
+// which the plugin also reported without failing.
+function scssLint (dir, done) {
+  spawn('bundle', [ 'exec', 'scss-lint', '--config', '.scss-lint.yml', dir ], {
+    stdio: 'inherit',
+  }).on('close', function (code) {
+    done(code <= 1 ? null : new Error('scss-lint exited with code ' + code));
+  });
+}
+
 var supportedBrowsers = [
   '> 1%',
   'Last 2 versions',
@@ -29,10 +40,7 @@ gulp.task('scss-lint', function (done) {
     return done();
   }
 
-  return gulp.src('src/stylesheets/**/*.scss')
-    .pipe(linter({
-      config: '.scss-lint.yml',
-    }));
+  scssLint('src/stylesheets', done);
 
 });
 
@@ -43,10 +51,7 @@ gulp.task('create-tmp-docs', function (done) {
 });
 
 gulp.task('lint-tmp-docs-scss', function (done) {
-  return gulp.src('tmpdocs/**/*.scss')
-    .pipe(linter({
-      config: '.scss-lint.yml',
-    }));
+  scssLint('tmpdocs', done);
 });
 
 gulp.task('delete-tmp-docs', function (done) {
