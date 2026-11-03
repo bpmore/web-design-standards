@@ -1,9 +1,10 @@
 source 'https://rubygems.org'
 
-gem 'jekyll'
-gem 'json'
+gem 'jekyll', '~> 3.10'
+gem 'json', '>= 2.3.0'
+gem 'kramdown-parser-gfm'
 
-gem 'rouge', '1.9'
-gem 'redcarpet'
+gem 'rouge', '~> 3.0'
+gem 'redcarpet', '>= 3.5.1'
 
 gem 'scss_lint', require: false
